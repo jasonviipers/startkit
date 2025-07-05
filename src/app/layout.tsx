@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://your-domain.com",
+    url: process.env.NEXT_PUBLIC_APP_URL,
     title: "SaaS Starter Template",
     description: "A comprehensive SaaS starter template built with Next.js, TanStack Query, Stripe, better-auth, shadcn/ui, and Tailwind CSS",
     siteName: "SaaS Starter Template",

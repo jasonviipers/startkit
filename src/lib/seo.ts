@@ -17,7 +17,7 @@ export function generateSEO({
 }: SEOProps = {}): Metadata {
   const siteTitle = 'SaaS Starter Template'
   const siteDescription = 'A comprehensive SaaS starter template built with Next.js, TanStack Query, Stripe, better-auth, shadcn/ui, and Tailwind CSS'
-  const siteUrl = 'https://your-domain.com'
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL!
   const defaultImage = `${siteUrl}/og-image.jpg`
 
   const metadata: Metadata = {
