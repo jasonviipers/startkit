@@ -3,18 +3,15 @@ import { db } from './index';
 import { 
   users, 
   organizations, 
-  organizationMembers, 
-  projects, 
+  member as organizationMembers, 
   files, 
-  apiKeys,
+  apikey as apiKeys,
   auditLogs,
   type User,
   type Organization,
-  type Project,
   type File,
   type NewUser,
   type NewOrganization,
-  type NewProject,
   type NewFile,
   type NewOrganizationMember,
   type NewAuditLog
@@ -91,39 +88,6 @@ export const getOrganizationMembers = async (organizationId: string) => {
     .orderBy(desc(organizationMembers.createdAt));
 };
 
-// Project queries
-export const getProjectById = async (id: string): Promise<Project | null> => {
-  const result = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
-  return result[0] || null;
-};
-
-export const getOrganizationProjects = async (organizationId: string) => {
-  return await db
-    .select({
-      project: projects,
-      creator: users,
-    })
-    .from(projects)
-    .innerJoin(users, eq(projects.createdBy, users.id))
-    .where(and(
-      eq(projects.organizationId, organizationId),
-      eq(projects.status, 'active')
-    ))
-    .orderBy(desc(projects.createdAt));
-};
-
-export const createProject = async (projectData: NewProject): Promise<Project> => {
-  const result = await db.insert(projects).values(projectData).returning();
-  return result[0];
-};
-
-export const updateProject = async (id: string, projectData: Partial<NewProject>): Promise<Project | null> => {
-  const result = await db.update(projects)
-    .set({ ...projectData, updatedAt: new Date() })
-    .where(eq(projects.id, id))
-    .returning();
-  return result[0] || null;
-};
 
 // File queries
 export const getFileById = async (id: string): Promise<File | null> => {
@@ -167,7 +131,7 @@ export const getOrganizationApiKeys = async (organizationId: string) => {
   return await db
     .select()
     .from(apiKeys)
-    .where(eq(apiKeys.organizationId, organizationId))
+    .where(eq(apiKeys.userId, organizationId))
     .orderBy(desc(apiKeys.createdAt));
 };
 

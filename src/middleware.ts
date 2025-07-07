@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from './lib/auth/config';
+import { NextRequest, NextResponse } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -20,51 +20,20 @@ export async function middleware(request: NextRequest) {
 
   if (isProtectedRoute) {
     try {
-      const session = await auth.api.getSession({
-        headers: request.headers,
-      });
+      const sessionCookie = getSessionCookie(request);
 
-      if (!session) {
+      if (!sessionCookie) {
         // Redirect to sign in page
-        const signInUrl = new URL('/auth/signin', request.url);
-        signInUrl.searchParams.set('callbackUrl', pathname);
+        const signInUrl = new URL('/login', request.url);
         return NextResponse.redirect(signInUrl);
-      }
-
-      // Add user info to headers for API routes
-      if (pathname.startsWith('/api/')) {
-        const requestHeaders = new Headers(request.headers);
-        requestHeaders.set('x-user-id', session.user.id);
-        requestHeaders.set('x-user-email', session.user.email);
-
-        return NextResponse.next({
-          request: {
-            headers: requestHeaders,
-          },
-        });
       }
     } catch (error) {
       console.error('Auth middleware error:', error);
       // Redirect to sign in on error
-      const signInUrl = new URL('/auth/signin', request.url);
-      signInUrl.searchParams.set('callbackUrl', pathname);
+      const signInUrl = new URL('/login', request.url);
       return NextResponse.redirect(signInUrl);
     }
-  }
 
-  // Redirect authenticated users away from auth pages
-  if (pathname.startsWith('/auth/')) {
-    try {
-      const session = await auth.api.getSession({
-        headers: request.headers,
-      });
-
-      if (session) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
-    } catch (error) {
-      // Continue to auth page on error
-    }
   }
 
   return NextResponse.next();

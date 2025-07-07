@@ -1,9 +1,13 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { mcp } from "better-auth/plugins";
-import { createId } from "@paralleldrive/cuid2";
-import { users, sessions, accounts, verification } from "../db/schema";
+import { mcp, magicLink, organization, apiKey } from "better-auth/plugins";
+import { nextCookies } from "better-auth/next-js";
+import { stripe } from "@better-auth/stripe"
+import { cookies } from "next/headers";
+import { users, sessions, accounts, verifications } from "../db/schema";
 import { db } from "../db";
+import { sendMagicLinkEmail } from "../email/templates";
+import { stripe as stripeClient } from "../stripe";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -12,9 +16,14 @@ export const auth = betterAuth({
       user: users,
       session: sessions,
       account: accounts,
-      verification: verification,
+      verification: verifications,
     },
   }),
+  account: {
+    accountLinking: {
+      trustedProviders: ['google', 'github'],
+    },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
@@ -28,8 +37,19 @@ export const auth = betterAuth({
     },
   },
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60 // 5 minutes
+    },
+    expiresIn: 60 * 60 * 24,// 24h
+    updateAge: 60 * 30, // Refresh every 30 minutes
+    freshAge: 60 * 5, // Refresh every 5 minutes
+  },
+  cookies: {
+    get: async () => {
+      const cookieStore = await cookies();
+      return cookieStore.getAll();
+    },
   },
   user: {
     additionalFields: {
@@ -39,14 +59,42 @@ export const auth = betterAuth({
       },
     },
   },
-  advanced: {
-    generateId: () => {
-      // Use the same ID generation as our schema
-      return createId();
+  rateLimit: {
+    window: 10,// 10s
+    max: 100, // 100 requests per 10s
+    customRules: {
+      '/api/auth/callback/github': {
+        max: 5, // 5 requests per minute
+        window: 60, // 1 minute
+      },
+      '/api/auth/callback/google': {
+        max: 5, // 5 requests per minute
+        window: 60, // 1 minute
+      },
     },
   },
-   plugins: [
+  baseURL: process.env.BETTER_AUTH_URL ?? '',
+  secret: process.env.BETTER_AUTH_SECRET ?? '',
+  plugins: [
     mcp({ loginPage: "/sign-in" }),
+    apiKey(),
+    organization(),
+    nextCookies(),
+    magicLink({
+      sendMagicLink: async ({ email, url }) => {
+        try {
+          await sendMagicLinkEmail({ email, url });
+        } catch (error) {
+          console.error('Failed to send magic link email:', error);
+          throw new Error('Failed to send magic link email');
+        }
+      }
+    }),
+    stripe({
+      stripeClient,
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      createCustomerOnSignUp: true,
+    })
   ]
 });
 
