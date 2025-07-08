@@ -10,6 +10,10 @@ export const users = pgTable("users", {
 	createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
 	updatedAt: timestamp('updated_at').$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
 	stripeCustomerId: text('stripe_customer_id'),
+	stripeSubscriptionId: text('stripe_subscription_id').unique(),
+	stripeProductId: text('stripe_product_id'),
+	planName: text('plan_name'),
+	subscriptionStatus: text('subscription_status'),
 	role: text('role').default("user")
 });
 
@@ -141,32 +145,31 @@ export const invitation = pgTable("invitation", {
 
 // Audit logs
 export const auditLogs = pgTable('audit_logs', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  action: text('action').notNull(),
-  entity: text('entity').notNull(),
-  entityId: text('entity_id').notNull(),
-  userId: text('user_id').references(() => users.id),
-  organizationId: text('organization_id').references(() => organizations.id),
-  metadata: jsonb('metadata'),
-  ipAddress: text('ip_address'),
-  userAgent: text('user_agent'),
-  createdAt: timestamp('created_at').defaultNow(),
+	id: text('id').primaryKey().$defaultFn(() => createId()),
+	action: text('action').notNull(),
+	entity: text('entity').notNull(),
+	entityId: text('entity_id').notNull(),
+	userId: text('user_id').references(() => users.id),
+	organizationId: text('organization_id').references(() => organizations.id),
+	metadata: jsonb('metadata'),
+	ipAddress: text('ip_address'),
+	userAgent: text('user_agent'),
+	createdAt: timestamp('created_at').defaultNow(),
 });
-
 
 // Files table for R2 storage
 export const files = pgTable('files', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  name: text('name').notNull(),
-  originalName: text('original_name').notNull(),
-  mimeType: text('mime_type').notNull(),
-  size: integer('size').notNull(),
-  key: text('key').notNull().unique(), // R2 object key
-  url: text('url').notNull(),
-  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  organizationId: text('organization_id').references(() => organizations.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+	id: text('id').primaryKey().$defaultFn(() => createId()),
+	name: text('name').notNull(),
+	originalName: text('original_name').notNull(),
+	mimeType: text('mime_type').notNull(),
+	size: integer('size').notNull(),
+	key: text('key').notNull().unique(), // R2 object key
+	url: text('url').notNull(),
+	userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
+	organizationId: text('organization_id').references(() => organizations.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at').defaultNow(),
+	updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 // Export types

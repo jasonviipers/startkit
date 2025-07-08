@@ -38,7 +38,8 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Email/password authentication</li>
+                  <li>• Magic Link</li>
+                  <li>• Passkeys</li>
                   <li>• OAuth providers (Google, GitHub)</li>
                   <li>• Session management</li>
                   <li>• Protected routes</li>

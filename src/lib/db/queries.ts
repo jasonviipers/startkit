@@ -1,10 +1,10 @@
 import { eq, and, desc, asc } from 'drizzle-orm';
 import { db } from './index';
-import { 
-  users, 
-  organizations, 
-  member as organizationMembers, 
-  files, 
+import {
+  users,
+  organizations,
+  member as organizationMembers,
+  files,
   apikey as apiKeys,
   auditLogs,
   type User,
@@ -40,6 +40,30 @@ export const updateUser = async (id: string, userData: Partial<NewUser>): Promis
     .returning();
   return result[0] || null;
 };
+
+export const getStripeCustomerId = async (customerId: string): Promise<string | null> => {
+  const result = await db.select({ stripeCustomerId: users.stripeCustomerId })
+    .from(users)
+    .where(eq(users.stripeCustomerId, customerId))
+    .limit(1);
+  return result.length > 0 ? result[0].stripeCustomerId : null;
+};
+
+export const updateSubscription = async (customerId: string, subscriptionData: {
+  stripeSubscriptionId: string | null;
+  stripeProductId: string | null;
+  planName: string | null;
+  subscriptionStatus: string;
+}) =>{ 
+  const result = await db.update(users)
+    .set({
+     ...subscriptionData,
+      updatedAt: new Date()
+    })
+    .where(eq(users.stripeCustomerId, customerId))
+    .returning();
+  return result[0] || null;
+}
 
 // Organization queries
 export const getOrganizationById = async (id: string): Promise<Organization | null> => {
