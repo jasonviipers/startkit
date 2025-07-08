@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { signIn } from "@/lib/auth/client"
 import { useState, useRef } from "react"
+import { toast } from "sonner"
 
 // Types
 interface AuthError {
@@ -58,7 +59,7 @@ export function LoginForm({
     github: false,
     google: false
   })
-  
+
   const formRef = useRef<HTMLFormElement>(null)
   const emailInputRef = useRef<HTMLInputElement>(null)
 
@@ -86,7 +87,7 @@ export function LoginForm({
   }
 
   // Generic error handler
-  const handleAuthError = (error: any) => {
+  const handleAuthError = (error:any) => {
     console.log("Authentication error:", error)
     setAuthError({
       message: error.message || "An error occurred during sign in. Please try again.",
@@ -97,33 +98,27 @@ export function LoginForm({
   // Magic link sign in
   const handleMagicLinkSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateEmail(email)) {
       emailInputRef.current?.focus()
       return
     }
-
-    setLoading(prev => ({ ...prev, magicLink: true }))
-    setAuthError(null)
-
     try {
       const result = await signIn.magicLink(
-        { email },
+        { email, callbackURL: "/dashboard" },
         {
-          onRequest: () => {
-            // Already handled by state
-          },
-          onResponse: () => {
+          onRequest: () => setLoading(prev => ({ ...prev, magicLink: true })),
+          onSuccess: () => {
             setLoading(prev => ({ ...prev, magicLink: false }))
           },
           onError: handleAuthError
         }
       )
-      
+
       // Handle success - could show a success message
       if (result?.data?.status) {
         setAuthError(null)
-        // Optionally show success message
+        toast.success("Magic link sent! Please check your email.")
       }
     } catch (error) {
       handleAuthError(error)
@@ -215,8 +210,8 @@ export function LoginForm({
             </div>
 
             {/* Magic Link Button */}
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isAnyLoading}
               className="w-full bg-green-700 hover:bg-green-800"
             >
@@ -231,9 +226,9 @@ export function LoginForm({
             </Button>
 
             {/* Passkey Button */}
-            <Button 
-              variant="outline" 
-              type="button" 
+            <Button
+              variant="outline"
+              type="button"
               className="w-full"
               onClick={handlePasskeySignIn}
               disabled={isAnyLoading}
@@ -261,9 +256,9 @@ export function LoginForm({
 
           {/* Social Buttons */}
           <div className="grid gap-4 sm:grid-cols-2">
-            <Button 
-              variant="outline" 
-              type="button" 
+            <Button
+              variant="outline"
+              type="button"
               className="w-full"
               onClick={() => handleSocialSignIn("github")}
               disabled={isAnyLoading}
@@ -281,9 +276,9 @@ export function LoginForm({
               )}
             </Button>
 
-            <Button 
-              variant="outline" 
-              type="button" 
+            <Button
+              variant="outline"
+              type="button"
               className="w-full"
               onClick={() => handleSocialSignIn("google")}
               disabled={isAnyLoading}

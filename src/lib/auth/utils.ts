@@ -23,16 +23,16 @@ export async function getCurrentUser() {
 
 export async function requireAuth() {
   const user = await getCurrentUser();
-  
+
   if (!user) {
     throw new Error('Authentication required');
   }
-  
+
   return user;
 }
 
-export function getUserFromHeaders() {
-  const headersList = headers();
+export async function getUserFromHeaders() {
+  const headersList = await headers();
   const userId = headersList.get('x-user-id');
   const userEmail = headersList.get('x-user-email');
 
@@ -47,12 +47,12 @@ export function getUserFromHeaders() {
 }
 
 export async function requireAuthFromHeaders() {
-  const user = getUserFromHeaders();
-  
+  const user = await getUserFromHeaders();
+
   if (!user) {
     throw new Error('Authentication required');
   }
-  
+
   return user;
 }
 

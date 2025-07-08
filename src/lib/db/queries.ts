@@ -41,28 +41,47 @@ export const updateUser = async (id: string, userData: Partial<NewUser>): Promis
   return result[0] || null;
 };
 
-export const getStripeCustomerId = async (customerId: string): Promise<string | null> => {
-  const result = await db.select({ stripeCustomerId: users.stripeCustomerId })
-    .from(users)
-    .where(eq(users.stripeCustomerId, customerId))
-    .limit(1);
-  return result.length > 0 ? result[0].stripeCustomerId : null;
-};
-
-export const updateSubscription = async (customerId: string, subscriptionData: {
-  stripeSubscriptionId: string | null;
-  stripeProductId: string | null;
-  planName: string | null;
-  subscriptionStatus: string;
-}) =>{ 
-  const result = await db.update(users)
-    .set({
-     ...subscriptionData,
-      updatedAt: new Date()
+export async function getStripeCustomerId(stripeCustomerId: string) {
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.stripeCustomerId, stripeCustomerId),
+      columns: {
+        id: true,
+        stripeCustomerId: true,
+        email: true,
+      },
     })
-    .where(eq(users.stripeCustomerId, customerId))
-    .returning();
-  return result[0] || null;
+    return user
+  } catch (error) {
+    console.error('Error getting user by stripe customer ID:', error)
+    return null
+  }
+}
+
+export async function updateSubscription(
+  stripeCustomerId: string,
+  subscriptionData: {
+    stripeSubscriptionId: string | null
+    stripeProductId: string | null
+    planName: string | null
+    subscriptionStatus: string
+  }
+) {
+  try {
+    const result = await db
+      .update(users)
+      .set({
+        ...subscriptionData,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.stripeCustomerId, stripeCustomerId))
+      .returning()
+
+    return result[0]
+  } catch (error) {
+    console.error('Error updating subscription:', error)
+    throw error
+  }
 }
 
 // Organization queries
