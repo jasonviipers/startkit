@@ -64,7 +64,7 @@ export const auth = betterAuth({
     max: 100, // 100 requests per 10s
     customRules: {
       '/api/auth/callback/github': {
-        max: 5, // 5 requests per minute
+        max: 5, // 5 requests per minuteq
         window: 60, // 1 minute
       },
       '/api/auth/callback/google': {

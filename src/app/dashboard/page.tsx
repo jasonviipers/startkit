@@ -1,12 +1,18 @@
+import { PageHeader } from '@/components/layout/page-header'
 import { requireAuth } from '@/lib/auth/utils'
+import { Metadata } from 'next'
 import React from 'react'
 
+export const metadata: Metadata = {
+  title: "Dashboard"
+}
 export default async function page() {
-   const user = await requireAuth()
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-white">Welcome to the Dashboard, {user.name}!</h1>
-      <p className="text-gray-400 mt-4">This is your dashboard where you can manage your projects, files, and settings.</p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Hi, Welcome back 👋"
+        description="Here's what's happening with your account today."
+      />
     </div>
   )
 }
